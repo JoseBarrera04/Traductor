@@ -12,6 +12,7 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include "tinyfiledialogs.h"
 
 using namespace std;
@@ -99,8 +100,11 @@ unordered_map<string, string> registroMIPS = {
     {"$ra", "11111"}
 };
 
+// Mapas Etiquetas
+unordered_map<string, unsigned int> etiquetas;
+
 // Funciones
-void abrirArchivo(vector<vector<string>>& listaCompletaComandos);
+void abrirArchivo(vector<vector<string>>& listaCompletaComandos, unsigned int& pc);
 void limpiarComando(string& linea);
 vector<string> separarComandos(string& linea);
 void traduccirMipsToBinario(vector<vector<string>>& listaCompletaComandos);
@@ -113,8 +117,9 @@ string traducirTipoJ();
  * @return Codigo de estado de la ejecucion
  */
 int main() {
+    unsigned int pc = 0x00000000;
     vector<vector<string>> listaCompletaComandos;
-    abrirArchivo(listaCompletaComandos);
+    abrirArchivo(listaCompletaComandos, pc);
     traduccirMipsToBinario(listaCompletaComandos);
     return 0;
 }
@@ -123,7 +128,7 @@ int main() {
  * @brief Abre un archivo (.s || .txt) y carga las instrucciones MIPS en una lista
  * @param listaCompletaComandos Vector donde se almacenan las instrucciones por separado
  */
-void abrirArchivo(vector<vector<string>>& listaCompletaComandos) {
+void abrirArchivo(vector<vector<string>>& listaCompletaComandos, unsigned int& pc) {
     const char *filter[2] = {"*.s", "*.txt"};
     const char *filePath = tinyfd_openFileDialog(
         "Selecciona un archivo", "", 2, filter, "Archivos MIPS (*.s, *.txt)", 0
@@ -136,16 +141,24 @@ void abrirArchivo(vector<vector<string>>& listaCompletaComandos) {
             string linea;
             while (getline(file, linea)) {
                 limpiarComando(linea);
-                if(linea != "") {
-                    listaCompletaComandos.push_back(separarComandos(linea));
+                if(!linea.empty()) {
+                    if(linea.back() == ':') {
+                        string etiqueta = linea.substr(0, linea.size()-1);
+                        etiquetas[etiqueta] = pc + 0x0004;
+                    } else {
+                        listaCompletaComandos.push_back(separarComandos(linea));
+                        pc += 0x0004;
+                    }
                 }
             }
+            // Este mapa solo sirve para ver etiquetas en el debug
+            unordered_map<string, unsigned int> clon = etiquetas;
             file.close();
         } else {
             cout << "No se pudo abrir el archivo." << endl;
         }
     } else {
-        cout << "No se seleccionó ningún archivo." << endl;
+        cout << "No se selecciono ningun archivo." << endl;
     }
 }
 
@@ -158,6 +171,9 @@ void limpiarComando(string& linea) {
     if(posComentarios >= 0) {
         linea = linea.substr(0, posComentarios);
     }
+
+    //erase(linea, ',');
+    linea.erase(remove(linea.begin(), linea.end(), ','), linea.end());
 }
 
 /**
@@ -182,6 +198,23 @@ vector<string> separarComandos(string& linea) {
  * @param listaCompletaComandos Vector con las instrucciones MIPS
  */
 void traduccirMipsToBinario(vector<vector<string>>& listaCompletaComandos) {
+    for(vector<vector<string>>::iterator it = listaCompletaComandos.begin(); it != listaCompletaComandos.end(); it++) {
+        if(it->empty() != 0) {
+            string instruccion = (*it)[0];
+            if(intruccionesMips.find(instruccion) != intruccionesMips.end()) {
+                vector<string> info = intruccionesMips[instruccion];
+                string tipoOperacion = info[0];
+
+                string binario;
+                if(tipoOperacion == "R") {
+                } else if(tipoOperacion == "I") {
+                } else if(tipoOperacion == "J") {
+                }
+            } else {
+                cout << "Instruccion no reconocida: " << instruccion << endl;
+            }
+        }
+    }
 }
 
 string traducirTipoR() {

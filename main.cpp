@@ -203,13 +203,16 @@ void traduccirMipsToBinario(vector<vector<string>>& listaCompletaComandos) {
             string instruccion = (*it)[0];
             if(intruccionesMips.find(instruccion) != intruccionesMips.end()) {
                 vector<string> info = intruccionesMips[instruccion];
-                string tipoOperacion = info[0];
-
                 string binario;
-                if(tipoOperacion == "R") {
-                } else if(tipoOperacion == "I") {
-                } else if(tipoOperacion == "J") {
+                if(info[0] == "R") {
+                    //traducirTipoR();
+                } else if(info[0] == "I") {
+                    //traducirTipoI();
+                } else if(info[0] == "J") {
+                    //traducirTipoJ();
                 }
+
+                cout << binario << endl;
             } else {
                 cout << "Instruccion no reconocida: " << instruccion << endl;
             }

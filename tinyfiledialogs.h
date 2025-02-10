@@ -73,7 +73,7 @@ extern "C" {
 /* On windows, if you want to use UTF-8 ( instead of the UTF-16/wchar_t functions at the end of this file )
 Make sure your code is really prepared for UTF-8 (on windows, functions like fopen() expect MBCS and not UTF-8) */
 extern int tinyfd_winUtf8; /* on windows char strings can be 1:UTF-8(default) or 0:MBCS */
-/* for MBCS change this to 0, in tinyfiledialogs.c or in your code */
+/* for MBCS change this to 0, in tinyfiledialogs.cpp or in your code */
 
 /* Here are some functions to help you convert between UTF-16 UTF-8 MBSC */
 char * tinyfd_utf8toMbcs(char const * aUtf8string);

@@ -12,13 +12,14 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <bitset>
 #include <algorithm>
 #include "tinyfiledialogs.h"
 
 using namespace std;
 
 // Mapas Desordenados
-unordered_map<string, vector<string>> intruccionesMips = {
+unordered_map<string, vector<string>> instruccionesMips = {
     {"add", {"R", "000000", "100000"}},
     {"addi", {"I", "001000"}},
     {"addiu", {"I", "001001"}},
@@ -103,14 +104,17 @@ unordered_map<string, string> registroMIPS = {
 // Mapas Etiquetas
 unordered_map<string, unsigned int> etiquetas;
 
+// String comandoCompleto
+string comandoCompleto;
+
 // Funciones
 void abrirArchivo(vector<vector<string>>& listaCompletaComandos, unsigned int& pc);
 void limpiarComando(string& linea);
 vector<string> separarComandos(string& linea);
 void traduccirMipsToBinario(vector<vector<string>>& listaCompletaComandos);
-string traducirTipoR();
-string traducirTipoI();
-string traducirTipoJ();
+void traducirTipoR(vector<string> lineaMips);
+void traducirTipoI(vector<string> lineaMips);
+void traducirTipoJ(vector<string> lineaMips);
 
 /**
  * Main Principal
@@ -199,17 +203,18 @@ vector<string> separarComandos(string& linea) {
  */
 void traduccirMipsToBinario(vector<vector<string>>& listaCompletaComandos) {
     for(vector<vector<string>>::iterator it = listaCompletaComandos.begin(); it != listaCompletaComandos.end(); it++) {
-        if(it->empty() != 0) {
+        if(it->empty() == 0) {
             string instruccion = (*it)[0];
-            if(intruccionesMips.find(instruccion) != intruccionesMips.end()) {
-                vector<string> info = intruccionesMips[instruccion];
+            if(instruccionesMips.find(instruccion) != instruccionesMips.end()) {
+                vector<string> info = instruccionesMips[instruccion];
                 string binario;
+                vector<string> lineaMips = (*it);
                 if(info[0] == "R") {
-                    //traducirTipoR();
+                    traducirTipoR(lineaMips);
                 } else if(info[0] == "I") {
-                    //traducirTipoI();
+                    traducirTipoI(lineaMips);
                 } else if(info[0] == "J") {
-                    //traducirTipoJ();
+                    traducirTipoJ(lineaMips);
                 }
 
                 cout << binario << endl;
@@ -220,14 +225,28 @@ void traduccirMipsToBinario(vector<vector<string>>& listaCompletaComandos) {
     }
 }
 
-string traducirTipoR() {
-    return "Pene";
+void traducirTipoR(vector<string> lineaMips) {
+    string opcode = instruccionesMips[lineaMips[0]][1];
+    string rs = registroMIPS[lineaMips[2]];
+    string rt = registroMIPS[lineaMips[3]];
+    string rd = registroMIPS[lineaMips[1]];
+    string shamt = "x";
+    string funct = instruccionesMips[lineaMips[0]][2];
+
+    comandoCompleto += opcode + rs + rt + rd + shamt + funct;
 }
 
-string traducirTipoI() {
-    return "Pene";
+void traducirTipoI(vector<string> lineaMips) {
+    string opcode = instruccionesMips[lineaMips[0]][1];
+    string rs = registroMIPS[lineaMips[2]];
+    string rt = registroMIPS[lineaMips[1]];
+    string immediate = lineaMips[3];
+    int enteroImmediate = stoi(immediate);
+    bitset<16> binario(enteroImmediate);
+    immediate = binario.to_string();
+
+    comandoCompleto += opcode + rs + rt + immediate;
 }
 
-string traducirTipoJ() {
-    return "dick";
+void traducirTipoJ(vector<string> lineaMips) {
 }

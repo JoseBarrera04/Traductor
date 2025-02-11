@@ -117,14 +117,42 @@ void traducirTipoI(vector<string> lineaMips);
 void traducirTipoJ(vector<string> lineaMips);
 
 /**
+ * @brief Permite al usuario ingresar instrucciones MIPS línea por línea hasta que se ingrese #
+ * @param listaCompletaComandos Vector donde se almacenan las instrucciones por separado
+ */
+void ingresarInstrucciones(vector<vector<string>>& listaCompletaComandos, unsigned int& pc) {
+    string linea;
+    cout << "Ingrese las instrucciones MIPS línea por línea. Ingrese # para finalizar." << endl;
+    while (true) {
+        cout << "> ";
+        getline(cin, linea);
+        if (linea == "#") {
+            break;
+        }
+        limpiarComando(linea);
+        if (!linea.empty()) {
+            if (linea.back() == ':') {
+                string etiqueta = linea.substr(0, linea.size() - 1);
+                etiquetas[etiqueta] = pc + 0x0004;
+            } else {
+                listaCompletaComandos.push_back(separarComandos(linea));
+                pc += 0x0004;
+            }
+        }
+    }
+}
+
+/**
  * Main Principal
  * @return Codigo de estado de la ejecucion
  */
 int main() {
     unsigned int pc = 0x00000000;
     vector<vector<string>> listaCompletaComandos;
-    abrirArchivo(listaCompletaComandos, pc);
+    //abrirArchivo(listaCompletaComandos, pc);
+    ingresarInstrucciones(listaCompletaComandos, pc);
     traduccirMipsToBinario(listaCompletaComandos);
+    cout << comandoCompleto << endl;
     return 0;
 }
 
@@ -230,7 +258,7 @@ void traducirTipoR(vector<string> lineaMips) {
     string rs = registroMIPS[lineaMips[2]];
     string rt = registroMIPS[lineaMips[3]];
     string rd = registroMIPS[lineaMips[1]];
-    string shamt = "x";
+    string shamt = "00000";
     string funct = instruccionesMips[lineaMips[0]][2];
 
     comandoCompleto += opcode + rs + rt + rd + shamt + funct;
@@ -245,8 +273,16 @@ void traducirTipoI(vector<string> lineaMips) {
     bitset<16> binario(enteroImmediate);
     immediate = binario.to_string();
 
-    comandoCompleto += opcode + rs + rt + immediate;
+    cout << "tipo i:" << endl;
+    comandoCompleto += opcode + " " + rs + " " + rt + " " + immediate;
 }
 
 void traducirTipoJ(vector<string> lineaMips) {
+    string opcode = instruccionesMips[lineaMips[0]][1];
+    string direccionEtiqueta = lineaMips[1];
+    unsigned int direccion = etiquetas[direccionEtiqueta] >> 2;
+    bitset<26> binarioDireccion(direccion);
+    string direccionBinaria = binarioDireccion.to_string();
+
+    comandoCompleto += opcode + direccionBinaria;
 }

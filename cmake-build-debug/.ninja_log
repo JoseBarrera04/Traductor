@@ -1,0 +1,14 @@
+# ninja log v6
+10	1500	7610116912669077	CMakeFiles/Traductor.dir/main.cpp.obj	a57807867aa6426b
+39	435	7614793549039275	build.ninja	36a91fb539a1cf2b
+1500	1770	7610116927575379	Traductor.exe	4e2eaf29202444a4
+72	2023	7608972382399183	CMakeFiles/Traductor.dir/tinyfiledialogs.cpp.obj	faf4aa0eac0013be
+33	1279	7614793646305298	CMakeFiles/Traductor.dir/main.cpp.obj	a57807867aa6426b
+37	1885	7614793646355308	CMakeFiles/Traductor.dir/tinyfiledialogs.cpp.obj	faf4aa0eac0013be
+1885	2117	7614793664833786	Traductor.exe	4e2eaf29202444a4
+5	1167	7614796134111512	CMakeFiles/Traductor.dir/main.cpp.obj	a57807867aa6426b
+1168	1383	7614796145733025	Traductor.exe	4e2eaf29202444a4
+98	1602	7619048609317555	CMakeFiles/Traductor.dir/main.cpp.obj	a57807867aa6426b
+1603	2146	7619048624365907	Traductor.exe	4e2eaf29202444a4
+29	1334	7619055845138555	CMakeFiles/Traductor.dir/main.cpp.obj	a57807867aa6426b
+1334	1581	7619055858201940	Traductor.exe	4e2eaf29202444a4

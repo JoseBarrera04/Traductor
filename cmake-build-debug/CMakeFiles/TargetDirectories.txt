@@ -1,0 +1,3 @@
+C:/Users/JoseB/Desktop/QtSpim/Arqui/Traductor/cmake-build-debug/CMakeFiles/Traductor.dir
+C:/Users/JoseB/Desktop/QtSpim/Arqui/Traductor/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/JoseB/Desktop/QtSpim/Arqui/Traductor/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -134,7 +134,7 @@ int main() {
 
 /**
  * @brief Abre un archivo (.s || .txt) y carga las instrucciones MIPS en una lista
- * @param listaCompletaComandos Vector donde se almacenan las instrucciones por separado
+ *
  */
 void abrirArchivo(string& filePath) {
     const char *filter[2] = {"*.s", "*.txt"};
@@ -224,7 +224,6 @@ vector<string> separarComandos(string& linea) {
 
 /**
  * @brief Traduce las instrucciones MIPS a binario
- * @param listaCompletaComandos Vector con las instrucciones MIPS
  */
 void traducirMipsToBinario(string filePath, int& pc) {
     ifstream file(filePath);
@@ -374,6 +373,9 @@ void traducirTipoI(vector<string> lineaMips, int& pc) {
             return;
         }
         int offset = (etiquetas[lineaMips[3]] - (pc + 0x0004)) / 4;
+        if (etiquetas[lineaMips[3]] == 0) {
+            offset = 0;
+        }
         cout << etiquetas[lineaMips[3]] << " " << hex <<pc << " " << pc + 0x0004 << endl;
         if (offset < -32768 || offset > 32767) {
             cout << "Error en PC 0x" << hex << pc << ": Offset de salto fuera de rango" << endl;

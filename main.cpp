@@ -103,32 +103,32 @@ unordered_map<string, string> registroMIPS = {
 };
 
 // Mapas Etiquetas
-unordered_map<string, unsigned int> etiquetas;
+unordered_map<string, int> etiquetas;
 
 // String comandoCompleto
 string comandoCompleto;
 
 // Funciones
 void abrirArchivo(string& filePath);
-void calcularEtiquetas(string filePath, unsigned int& pc);
+void calcularEtiquetas(string filePath, int& pc);
 void limpiarComando(string& linea);
 vector<string> separarComandos(string& linea);
-void traducirMipsToBinario(string filePath, unsigned int& pc);
-void traducirTipoR(vector<string> lineaMips, unsigned int& pc);
-void traducirTipoI(vector<string> lineaMips, unsigned int& pc);
-void traducirTipoJ(vector<string> lineaMips, unsigned int& pc);
+void traducirMipsToBinario(string filePath, int& pc);
+void traducirTipoR(vector<string> lineaMips, int& pc);
+void traducirTipoI(vector<string> lineaMips, int& pc);
+void traducirTipoJ(vector<string> lineaMips, int& pc);
 
 /**
  * Main Principal
  * @return Codigo de estado de la ejecucion
  */
 int main() {
-    unsigned int pc = 0x00000000;
+    int pc = 0x00000000;
     string filePath;
     abrirArchivo(filePath);
     calcularEtiquetas(filePath, pc);
     traducirMipsToBinario(filePath, pc);
-    cout << comandoCompleto << endl;
+    cout << "Comando completo:" << endl << comandoCompleto << endl;
     return 0;
 }
 
@@ -156,7 +156,7 @@ void abrirArchivo(string& filePath) {
  * @param filePath
  * @param pc 
  */
-void calcularEtiquetas(string filePath, unsigned int &pc) {
+void calcularEtiquetas(string filePath, int &pc) {
     ifstream file(filePath);
     if (!file.is_open()) {
         cout << "No se pudo abrir el archivo." << endl;
@@ -164,17 +164,31 @@ void calcularEtiquetas(string filePath, unsigned int &pc) {
     }
     string linea;
     pc = 0x00000000;
+    bool primeraEtiqueta = true;
     while (getline(file, linea)) {
         limpiarComando(linea);
         if (!linea.empty()) {
             if (linea.back() == ':') {
                 string etiqueta = linea.substr(0, linea.size() - 1);
-                etiquetas[etiqueta] = pc + 0x0004;
+                if (primeraEtiqueta) {
+                    etiquetas[etiqueta] = pc;
+                    primeraEtiqueta = false;
+                } else {
+                    etiquetas[etiqueta] = pc + 0x0004;
+                }
             } else {
                 pc += 0x0004;
             }
         }
     }
+
+    for (auto& etiqueta : etiquetas) {
+        if (etiqueta.second == pc + 0x0004) {
+            etiqueta.second = 0;
+        }
+    }
+
+    unordered_map<string, int> aux = etiquetas;
     file.close();
 }
 
@@ -212,7 +226,7 @@ vector<string> separarComandos(string& linea) {
  * @brief Traduce las instrucciones MIPS a binario
  * @param listaCompletaComandos Vector con las instrucciones MIPS
  */
-void traducirMipsToBinario(string filePath, unsigned int& pc) {
+void traducirMipsToBinario(string filePath, int& pc) {
     ifstream file(filePath);
     if (!file.is_open()) {
         cout << "No se pudo abrir el archivo." << endl;
@@ -228,6 +242,7 @@ void traducirMipsToBinario(string filePath, unsigned int& pc) {
                     return;
                 }
                 vector<string> info = instruccionesMips[lineaMips[0]];
+                cout << "actual: " << pc << endl;
                 if (info[0] == "R") {
                     traducirTipoR(lineaMips, pc);
                 } else if (info[0] == "I") {
@@ -235,6 +250,7 @@ void traducirMipsToBinario(string filePath, unsigned int& pc) {
                 } else if (info[0] == "J") {
                     traducirTipoJ(lineaMips, pc);
                 }
+                cout << endl;
                 pc += 0x0004;
             }
         }
@@ -246,7 +262,7 @@ void traducirMipsToBinario(string filePath, unsigned int& pc) {
  * @brief Esta funcion traduce de MIPS a instrucciones tipo R
  * @param lineaMips
  */
-void traducirTipoR(vector<string> lineaMips, unsigned int& pc) {
+void traducirTipoR(vector<string> lineaMips, int& pc) {
     string opcode = instruccionesMips[lineaMips[0]][1];
     string funct = instruccionesMips[lineaMips[0]][2];
     string rs = "00000", rt = "00000", rd = "00000", shamt = "00000";
@@ -304,14 +320,14 @@ void traducirTipoR(vector<string> lineaMips, unsigned int& pc) {
 
     string binario = opcode + rs + rt + rd + shamt + funct;
     cout << "0x" << hex << pc << ": " << binario << endl;
-    //comandoCompleto += binario;
+    comandoCompleto += binario;
 }
 
 /**
  * @brief Esta funcion traduce de MIPS a instrucciones tipo I
  * @param lineaMips
  */
-void traducirTipoI(vector<string> lineaMips, unsigned int& pc) {
+void traducirTipoI(vector<string> lineaMips, int& pc) {
     string opcode = instruccionesMips[lineaMips[0]][1];
     string rs, rt, immediate;
 
@@ -358,11 +374,14 @@ void traducirTipoI(vector<string> lineaMips, unsigned int& pc) {
             return;
         }
         int offset = (etiquetas[lineaMips[3]] - (pc + 0x0004)) / 4;
+        cout << etiquetas[lineaMips[3]] << " " << hex <<pc << " " << pc + 0x0004 << endl;
         if (offset < -32768 || offset > 32767) {
             cout << "Error en PC 0x" << hex << pc << ": Offset de salto fuera de rango" << endl;
             return;
         }
-        immediate = bitset<16>(offset & 0xFFFF).to_string(); // Doble complemento para direcciones
+        immediate = bitset<16>(offset & 0xFFFF).to_string();
+        cout << offset << endl;
+        cout << immediate << endl; // Doble complemento para direcciones
     } else if (lineaMips[0] == "lui") {
         if (lineaMips.size() != 3 || registroMIPS.find(lineaMips[1]) == registroMIPS.end()) {
             cout << "Error en PC 0x" << hex << pc << ": 'lui' requiere rt y un inmediato" << endl;
@@ -372,7 +391,11 @@ void traducirTipoI(vector<string> lineaMips, unsigned int& pc) {
         rs = "00000";
         int imm;
         try {
-            imm = stoi(lineaMips[2]);
+            if (lineaMips[2].find("0x") == 0) {
+                imm = stoi(lineaMips[2], nullptr, 16);
+            } else {
+                imm = stoi(lineaMips[2]);
+            }
         } catch (...) {
             cout << "Error en PC 0x" << hex << pc << ": Inmediato debe ser un numero valido" << endl;
             return;
@@ -392,7 +415,11 @@ void traducirTipoI(vector<string> lineaMips, unsigned int& pc) {
         rs = registroMIPS[lineaMips[2]];
         int imm;
         try {
-            imm = stoi(lineaMips[3]);
+            if (lineaMips[3].find("0x") == 0) {
+                imm = stoi(lineaMips[3], nullptr, 16);
+            } else {
+                imm = stoi(lineaMips[3]);
+            }
         } catch (...) {
             cout << "Error en PC 0x" << hex << pc << ": Inmediato debe ser un numero valido" << endl;
             return;
@@ -406,14 +433,14 @@ void traducirTipoI(vector<string> lineaMips, unsigned int& pc) {
 
     string binario = opcode + rs + rt + immediate;
     cout << "0x" << hex << pc << ": " << binario << endl;
-    //comandoCompleto += binario;
+    comandoCompleto += binario;
 }
 
 /**
  * @brief Esta funcion traduce de MIPS a instrucciones tipo J
  * @param lineaMips
  */
-void traducirTipoJ(vector<string> lineaMips, unsigned int& pc) {
+void traducirTipoJ(vector<string> lineaMips, int& pc) {
     string opcode = instruccionesMips[lineaMips[0]][1];
     if (lineaMips.size() != 2 || etiquetas.find(lineaMips[1]) == etiquetas.end()) {
         cout << "Error en PC 0x" << hex << pc << ": " << lineaMips[0] << "' requiere una etiqueta valida" << endl;
@@ -424,5 +451,5 @@ void traducirTipoJ(vector<string> lineaMips, unsigned int& pc) {
 
     string binario = opcode + direccionBinaria;
     cout << "0x" << hex << pc << ": " << binario << endl;
-    //comandoCompleto += binario;
+    comandoCompleto += binario;
 }

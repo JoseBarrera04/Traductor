@@ -123,7 +123,7 @@ void traducirTipoJ(vector<string> lineaMips, int& pc);
  * @return Codigo de estado de la ejecucion
  */
 int main() {
-    int pc = 0x00000000;
+    int pc = 0x00040000;
     string filePath;
     abrirArchivo(filePath);
     calcularEtiquetas(filePath, pc);
@@ -134,7 +134,6 @@ int main() {
 
 /**
  * @brief Abre un archivo (.s || .txt) y carga las instrucciones MIPS en una lista
- *
  */
 void abrirArchivo(string& filePath) {
     const char *filter[2] = {"*.s", "*.txt"};
@@ -174,7 +173,8 @@ void calcularEtiquetas(string filePath, int &pc) {
                     etiquetas[etiqueta] = pc;
                     primeraEtiqueta = false;
                 } else {
-                    etiquetas[etiqueta] = pc + 0x0004;
+                    etiquetas[etiqueta] = pc;
+                    //etiquetas[etiqueta] = pc + 0x0004;
                 }
             } else {
                 pc += 0x0004;
@@ -266,6 +266,10 @@ void traducirTipoR(vector<string> lineaMips, int& pc) {
     string funct = instruccionesMips[lineaMips[0]][2];
     string rs = "00000", rt = "00000", rd = "00000", shamt = "00000";
 
+    if (lineaMips[1] == "$0" || lineaMips[1] == "$zero" || lineaMips[1] == "$gp" || lineaMips[1] == "$k0" || lineaMips[1] == "$k1") {
+        return;
+    }
+
     if (lineaMips[0] == "jr") {
         if (lineaMips.size() != 2 || registroMIPS.find(lineaMips[1]) == registroMIPS.end()) {
             cout << "Error en PC 0x" << hex << pc << ": 'jr' requiere un registro valido" << endl;
@@ -330,6 +334,10 @@ void traducirTipoI(vector<string> lineaMips, int& pc) {
     string opcode = instruccionesMips[lineaMips[0]][1];
     string rs, rt, immediate;
 
+    if (lineaMips[1] == "$0" || lineaMips[1] == "$zero" || lineaMips[1] == "$gp" || lineaMips[1] == "$k0" || lineaMips[1] == "$k1") {
+        return;
+    }
+
     if (lineaMips[0] == "lw" || lineaMips[0] == "sw") {
         if (lineaMips.size() != 3 || registroMIPS.find(lineaMips[1]) == registroMIPS.end()) {
             cout << "Error en PC 0x" << hex << pc << ": '" << lineaMips[0] << "' requiere rt y offset(registro)" << endl;
@@ -337,14 +345,21 @@ void traducirTipoI(vector<string> lineaMips, int& pc) {
         }
         rt = registroMIPS[lineaMips[1]];
         string offsetReg = lineaMips[2];
-        size_t pos = offsetReg.find('(');
+        int pos = offsetReg.find('(');
         if (pos == string::npos || offsetReg.back() != ')') {
             cout << "Error en PC 0x" << hex << pc << ": Formato invalido en '" << lineaMips[0] << "'" << endl;
             return;
         }
         int offset;
         try {
-            offset = stoi(offsetReg.substr(0, pos));
+            if (offsetReg.find("0x") == 0) {
+                offset = stoi(offsetReg.substr(0, pos), nullptr, 16);
+            } else {
+                offset = stoi(offsetReg.substr(0, pos));
+            }
+            cout << offset << endl;
+            cout << offsetReg << endl;
+
         } catch (...) {
             cout << "Error en PC 0x" << hex << pc << ": Offset debe ser un numero valido" << endl;
             return;
@@ -354,7 +369,9 @@ void traducirTipoI(vector<string> lineaMips, int& pc) {
             cout << "Error en PC 0x" << hex << pc << ": Registro base invalido en '" << lineaMips[0] << "'" << endl;
             return;
         }
-        if (offset < -32768 || offset > 32767) {
+        if (lineaMips[1] == "$gp" && offset > 65536) {
+            cout << "Error en PC 0x" << hex << pc << ": Offset fuera de rango (65536)" << endl;
+        } else if (offset < -32768 || offset > 32767) {
             cout << "Error en PC 0x" << hex << pc << ": Offset fuera de rango (-32768 a 32767)" << endl;
             return;
         }
@@ -382,8 +399,8 @@ void traducirTipoI(vector<string> lineaMips, int& pc) {
             return;
         }
         immediate = bitset<16>(offset & 0xFFFF).to_string();
-        cout << offset << endl;
-        cout << immediate << endl; // Doble complemento para direcciones
+        // cout << offset << endl;
+        // cout << immediate << endl; // Doble complemento para direcciones
     } else if (lineaMips[0] == "lui") {
         if (lineaMips.size() != 3 || registroMIPS.find(lineaMips[1]) == registroMIPS.end()) {
             cout << "Error en PC 0x" << hex << pc << ": 'lui' requiere rt y un inmediato" << endl;
@@ -448,7 +465,7 @@ void traducirTipoJ(vector<string> lineaMips, int& pc) {
         cout << "Error en PC 0x" << hex << pc << ": " << lineaMips[0] << "' requiere una etiqueta valida" << endl;
         return;
     }
-    unsigned int direccion = etiquetas[lineaMips[1]] >> 2;
+    int direccion = etiquetas[lineaMips[1]] >> 2;
     string direccionBinaria = bitset<26>(direccion).to_string();
 
     string binario = opcode + direccionBinaria;
